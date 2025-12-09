@@ -1,6 +1,7 @@
 streamlit
-requests
+streamlit
 pandas
 openpyxl
 beautifulsoup4
 streamlit-folium
+requests
