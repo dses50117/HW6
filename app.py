@@ -367,6 +367,44 @@ def main():
     st.markdown("### Central Weather Administration (CWA) Data")
     st.divider()
     
+    # Check if database exists and has data
+    try:
+        conn = sqlite3.connect('data.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM weather")
+        count = cursor.fetchone()[0]
+        conn.close()
+        
+        if count == 0:
+            st.warning("⚠️ Database is empty. Please initialize the database first.")
+            st.info("""
+            **To fetch weather data, run:**
+            ```bash
+            python fetch_weather.py
+            ```
+            This will fetch weather data for all 28 locations from CWA API.
+            """)
+            st.stop()
+    except sqlite3.OperationalError:
+        # Database table doesn't exist
+        st.error("❌ Database not found or not initialized.")
+        st.info("""
+        **First Time Setup Required:**
+        
+        Please run the following command to initialize the database and fetch weather data:
+        ```bash
+        python fetch_weather.py
+        ```
+        
+        This will:
+        - Create the SQLite database (`data.db`)
+        - Fetch weather data from CWA API for all 28 locations
+        - Store data in the database
+        
+        After running the command, refresh this page.
+        """)
+        st.stop()
+    
     # Fetch data
     try:
         # Sidebar options
