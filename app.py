@@ -376,34 +376,60 @@ def main():
         conn.close()
         
         if count == 0:
-            st.warning("⚠️ Database is empty. Please initialize the database first.")
+            st.warning("⚠️ Database is empty. Initializing...")
+            st.info("🔄 Fetching weather data from CWA API for all 28 locations. This may take 1-2 minutes...")
+            
+            # Auto-initialize for Streamlit Cloud
+            import subprocess
+            try:
+                result = subprocess.run(['python', 'fetch_weather.py'], 
+                                      capture_output=True, 
+                                      text=True, 
+                                      timeout=120)
+                if result.returncode == 0:
+                    st.success("✅ Database initialized successfully! Refreshing...")
+                    st.rerun()
+                else:
+                    st.error(f"❌ Failed to initialize database: {result.stderr}")
+                    st.stop()
+            except subprocess.TimeoutExpired:
+                st.error("❌ Database initialization timed out. Please try again.")
+                st.stop()
+            except Exception as e:
+                st.error(f"❌ Error during initialization: {str(e)}")
+                st.stop()
+                
+    except sqlite3.OperationalError:
+        # Database table doesn't exist - auto-initialize
+        st.warning("⚠️ First time setup detected. Initializing database...")
+        st.info("🔄 Fetching weather data from CWA API for all 28 locations. This may take 1-2 minutes...")
+        
+        import subprocess
+        try:
+            result = subprocess.run(['python', 'fetch_weather.py'], 
+                                  capture_output=True, 
+                                  text=True, 
+                                  timeout=120)
+            if result.returncode == 0:
+                st.success("✅ Database initialized successfully! Refreshing...")
+                st.rerun()
+            else:
+                st.error(f"❌ Failed to initialize database: {result.stderr}")
+                st.info("""
+                **Manual Setup:**
+                If automatic initialization fails, please contact the administrator.
+                """)
+                st.stop()
+        except subprocess.TimeoutExpired:
+            st.error("❌ Database initialization timed out. Please try again.")
+            st.stop()
+        except Exception as e:
+            st.error(f"❌ Error during initialization: {str(e)}")
             st.info("""
-            **To fetch weather data, run:**
-            ```bash
-            python fetch_weather.py
-            ```
-            This will fetch weather data for all 28 locations from CWA API.
+            **Manual Setup Required:**
+            Please contact the administrator to initialize the database.
             """)
             st.stop()
-    except sqlite3.OperationalError:
-        # Database table doesn't exist
-        st.error("❌ Database not found or not initialized.")
-        st.info("""
-        **First Time Setup Required:**
-        
-        Please run the following command to initialize the database and fetch weather data:
-        ```bash
-        python fetch_weather.py
-        ```
-        
-        This will:
-        - Create the SQLite database (`data.db`)
-        - Fetch weather data from CWA API for all 28 locations
-        - Store data in the database
-        
-        After running the command, refresh this page.
-        """)
-        st.stop()
     
     # Fetch data
     try:
