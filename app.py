@@ -379,24 +379,25 @@ def main():
             st.warning("⚠️ Database is empty. Initializing...")
             st.info("🔄 Fetching weather data from CWA API for all 28 locations. This may take 1-2 minutes...")
             
-            # Auto-initialize for Streamlit Cloud
-            import subprocess
+            # Direct import for Streamlit Cloud compatibility
             try:
-                result = subprocess.run(['python', 'fetch_weather.py'], 
-                                      capture_output=True, 
-                                      text=True, 
-                                      timeout=120)
-                if result.returncode == 0:
-                    st.success("✅ Database initialized successfully! Refreshing...")
-                    st.rerun()
-                else:
-                    st.error(f"❌ Failed to initialize database: {result.stderr}")
-                    st.stop()
-            except subprocess.TimeoutExpired:
-                st.error("❌ Database initialization timed out. Please try again.")
-                st.stop()
+                import sys
+                sys.path.insert(0, '.')
+                from fetch_weather import main as fetch_main
+                
+                with st.spinner('Fetching weather data...'):
+                    fetch_main()
+                
+                st.success("✅ Database initialized successfully! Refreshing...")
+                st.rerun()
             except Exception as e:
                 st.error(f"❌ Error during initialization: {str(e)}")
+                st.info("""
+                **Troubleshooting:**
+                - Please ensure all dependencies are installed
+                - Check your CWA API keys in secrets
+                - Try refreshing the page
+                """)
                 st.stop()
                 
     except sqlite3.OperationalError:
@@ -404,31 +405,23 @@ def main():
         st.warning("⚠️ First time setup detected. Initializing database...")
         st.info("🔄 Fetching weather data from CWA API for all 28 locations. This may take 1-2 minutes...")
         
-        import subprocess
         try:
-            result = subprocess.run(['python', 'fetch_weather.py'], 
-                                  capture_output=True, 
-                                  text=True, 
-                                  timeout=120)
-            if result.returncode == 0:
-                st.success("✅ Database initialized successfully! Refreshing...")
-                st.rerun()
-            else:
-                st.error(f"❌ Failed to initialize database: {result.stderr}")
-                st.info("""
-                **Manual Setup:**
-                If automatic initialization fails, please contact the administrator.
-                """)
-                st.stop()
-        except subprocess.TimeoutExpired:
-            st.error("❌ Database initialization timed out. Please try again.")
-            st.stop()
+            import sys
+            sys.path.insert(0, '.')
+            from fetch_weather import main as fetch_main
+            
+            with st.spinner('Fetching weather data...'):
+                fetch_main()
+            
+            st.success("✅ Database initialized successfully! Refreshing...")
+            st.rerun()
         except Exception as e:
             st.error(f"❌ Error during initialization: {str(e)}")
             st.info("""
             **Manual Setup Required:**
-            Please contact the administrator to initialize the database.
-            """)
+            Please contact the administrator or check the deployment logs.
+            
+            Error details: """ + str(e))
             st.stop()
     
     # Fetch data
